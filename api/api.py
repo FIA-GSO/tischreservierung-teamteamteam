@@ -13,14 +13,14 @@ app.config["DEBUG"] = True  # Zeigt Fehlerinformationen im Browser, statt nur ei
 def home():
     return "<h1>Tischreservierung</h1>"
 
-@app.route('/v1/reservierung/suchen', methods=['GET'])
+@app.route('/v1/reservierungen', methods=['GET'])
 def reservierung_suchen():
     #http://127.0.0.1:5000/reservierung/suchen?terminDatum=2023-02-02T18:15:00Z
     datum: str
     if 'datum' in request.args:
         datum = str(request.args['datum'])
     else:
-        return "Error: Es wurde kein gülitger Termin für die Reservierung angegeben."
+        return get_all_reservierungen()
 
     datumParsed = parse_date_to_sqlite(datum)
     if datumParsed is None:
@@ -28,16 +28,16 @@ def reservierung_suchen():
 
     db = get_db_connection()
     
-    query = get_free_tables_query(datum)
+    query = get_free_tables_query(datumParsed)
     if not query:
         return "Error: Beim verarbeiten der Anfrage ist ein Fehler aufgetreten!\nÜberprüfen Sie Ihre Angaben."
     
     freeTables = db.execute(query).fetchall()
     return jsonify(freeTables)
 
-@app.route('/v1/reservierung/buchen', methods=['POST'])
+@app.route('/v1/reservierungen', methods=['POST'])
 def reservierung_buchen():
-        #http://127.0.0.1:5000/reservierung/buchen?tischnummer=2&zeitpunkt=2023-02-02T18:15:00Z
+        #http://127.0.0.1:5000/reservierung/buchen?tischnummer=2&datum=2023-02-02T18:15:00Z
     tischnummer: str
     if 'tischnummer' in request.args:
         tischnummer = str(request.args['tischnummer'])
@@ -55,7 +55,7 @@ def reservierung_buchen():
         return 'Error: Beim verarbeiten des Datums ist ein Fehler aufgetreten!\nÜbeprüfen Sie Ihre Angaben.'
     
     db = get_db_connection()
-    freeTableQuery = get_table_is_free_query(datum, tischnummer)
+    freeTableQuery = get_table_is_free_query(datumParsed, tischnummer)
 
     isReserved = db.execute(freeTableQuery).execute().fetchall()
     if isReserved:
@@ -71,16 +71,16 @@ def reservierung_buchen():
         return jsonify(objekt)
     return "Error: Buchung war nicht erfolgreich"
 
-@app.route('/v1/reservierung/anzeigen', methods=['GET'])
+@app.route('/v1/reservierungen', methods=['DELETE'])
+def cancel_reservierung():
+    return "Error: Nicht implementiert"
+
+#@app.route('/v1/reservierungen', methods=['GET'])
 def get_all_reservierungen():
     db = get_db_connection()
     all_Tische = db.execute('SELECT * FROM reservierungen;').fetchall()
 
     return jsonify(all_Tische)
-
-@app.route('/v1/reservierung/stornieren', methods=['DELETE'])
-def cancel_reservierung():
-    return "Error: Nicht implementiert"
 
 def parse_date_to_sqlite(datum: str):
     datumValid = check_date_format(datum)
@@ -109,6 +109,7 @@ def parse_to_sqlite_format(zeitpunkt):
     sqlite_timestamp = re.sub(regPattern, " ", zeitpunkt)
     regPattern = "Z"
     sqlite_timestamp = re.sub(regPattern, "", sqlite_timestamp)
+    print(sqlite_timestamp)
     return sqlite_timestamp
 
 def get_table_is_free_query(datetime: str, tischnummer: str):

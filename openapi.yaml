@@ -1,0 +1,56 @@
+openapi: 3.0.0
+info:
+  title: Buchungssystem
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000
+paths:
+  /v1/reservierung:
+    post:
+      tags:
+        - General
+      summary: Reservierung buchen
+      requestBody:
+        content: {}
+      parameters:
+        - name: tischnummer
+          in: query
+          schema:
+            type: string
+        - name: datum
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    get:
+      tags:
+        - General
+      summary: Reservierung suchen
+      parameters:
+        - name: datum
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
+    delete:
+      tags:
+        - General
+      summary: Reservierung löschen
+      parameters:
+        - name: datum
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json: {}
